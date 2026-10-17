@@ -6,7 +6,11 @@ const window = new Window();
 for (const name of ['window', 'document', 'HTMLElement', 'customElements', 'CustomEvent', 'Event']) {
   globalThis[name] = name === 'window' ? window : window[name];
 }
-class ChildEditor extends HTMLElement { toggleMode() { this.yaml = !this.yaml; } }
+class ChildEditor extends HTMLElement {
+  set value(value) { this._value = value; queueMicrotask(() => this.dispatchEvent(new CustomEvent('config-changed', {detail:{config:this._value}}))); }
+  get value() { return this._value; }
+  toggleMode() { this.yaml = !this.yaml; }
+}
 class Picker extends HTMLElement {}
 customElements.define('hui-card-element-editor', ChildEditor);
 customElements.define('hui-card-picker', Picker);
@@ -75,4 +79,25 @@ test('pickers, tab operations, optional parent fields and invalid numeric input 
   const input=editor.shadowRoot.querySelector('input[type=number]'); input.value='-1';
   const previous=structuredClone(editor._config); input.dispatchEvent(new Event('change'));
   assert.deepEqual(editor._config,previous); editor.remove();
+});
+
+test('HA initialization, invalid YAML and container YAML round trips preserve the root', async () => {
+  const editor=create();const changes=[];editor.addEventListener('config-changed',e=>changes.push(e.detail.config));
+  click(editor,'Edit container YAML');await tick();
+  assert.equal(editor._native.GUImode,false);assert.equal(changes.length,0);
+  editor._native.dispatchEvent(new CustomEvent('config-changed',{detail:{config:{type:'invalid'},error:'Invalid YAML'}}));
+  assert.equal(changes.length,0);
+  const changed=structuredClone(fixture);changed.styles['--example']='preserved';
+  editor._native.dispatchEvent(new CustomEvent('config-changed',{detail:{config:changed}}));
+  assert.deepEqual(changes,[changed]);click(editor,'Back to container form');
+  assert.deepEqual(editor._config,changed);editor.remove();
+});
+
+test('width reset retains newly changed defaults and unknown options', () => {
+  const editor=create();const input=editor.shadowRoot.querySelector('input[type=number]');input.value='0';input.dispatchEvent(new Event('change'));
+  const select=editor.shadowRoot.querySelector('select');select.value='equal';select.dispatchEvent(new Event('change'));
+  select.value='';select.dispatchEvent(new Event('change'));
+  assert.equal(editor._config.options.defaultTabIndex,0);
+  assert.deepEqual(editor._config.options.futureOption,fixture.options.futureOption);
+  assert.equal(editor._config.options.tabWidthMode,undefined);editor.remove();
 });

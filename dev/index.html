@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tabbed Card candidate playground</title>
+<style>
+  :root{--primary-color:#7cb8ce;--primary-text-color:#e6edf3;--secondary-text-color:#a8b4c3;--card-background-color:#202731;--secondary-background-color:#27313d;--divider-color:#475363;color-scheme:dark}
+  body{margin:0;background:#141a22;color:var(--primary-text-color);font:14px system-ui}body.light{--primary-color:#216d8b;--primary-text-color:#23313f;--secondary-text-color:#58697b;--card-background-color:#fff;--secondary-background-color:#eef2f6;--divider-color:#bdc8d3;background:#f4f6f8;color-scheme:light}
+  header{padding:20px;max-width:1100px;margin:auto}h1{font-size:23px;margin:0 0 8px}p{color:var(--secondary-text-color);line-height:1.5}.actions{display:flex;flex-wrap:wrap;gap:8px}button{font:inherit;background:var(--secondary-background-color);color:inherit;border:1px solid var(--divider-color);border-radius:8px;padding:9px 12px;cursor:pointer}
+  main{max-width:1100px;margin:auto;padding:0 20px 30px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.panel{padding:16px;border:1px solid var(--divider-color);border-radius:12px;background:var(--card-background-color);min-width:0}h2{font-size:16px;margin:0 0 12px}#status{padding-top:12px;min-height:20px}#preview{min-width:0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}button:focus-visible{outline:2px solid var(--primary-color)}
+  @media(max-width:650px){header{padding:14px}main{grid-template-columns:minmax(0,1fr);padding:0 12px 20px}.panel{padding:12px}}
+</style>
+<header><h1>Tabbed Card · candidate playground</h1><p>Isolated synthetic fixtures. HA child editors are stubbed here; no home connection or device calls.</p><div class="actions"><button id="save">Save draft</button><button id="reopen">Reopen saved draft</button><button id="theme">Toggle light / dark</button><button id="long">Load long tab list</button><button id="reset">Reset fixture</button></div><div id="status" role="status">Ready · independent HA candidate acceptance pending</div></header>
+<main><section class="panel"><h2>Native editor</h2><div id="editor"></div></section><section class="panel"><h2>Editor preview</h2><div id="preview"></div><h2 style="margin-top:24px">Normal dashboard instance</h2><div id="normal"></div><p>The normal instance must not follow or outline editor selection.</p><details><summary>Current synthetic configuration</summary><pre id="config"></pre></details></section></main>
+<script type="module" src="./playground.js"></script>
+</html>
