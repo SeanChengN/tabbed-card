@@ -31,6 +31,12 @@ The manual Build candidate workflow provides the same package with a three-day
 artifact retention. Validate uses pull requests/manual dispatch without nightly
 or duplicate push builds.
 
+The fork tracks the single `dist/tabbed-card.js` installable so HACS can validate
+its repository structure before the first release exists. Rebuild and include
+that file whenever runtime source changes. CI verifies that a fresh build
+matches it. Other build output remains ignored; tracking this candidate is not
+a GitHub Release or approval to switch HA resources.
+
 ## Candidate installation and rollback
 
 Keep the currently accepted dashboard running while evaluating the candidate
