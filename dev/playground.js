@@ -14,7 +14,7 @@ class DemoCard extends HTMLElement {
     }
     if(this.config.entity){const text=document.createElement('p');text.textContent=this.config.entity;section.append(text);}
     for(const child of [this.config['title-card'],this.config.card,...(this.config.cards||[])].filter(Boolean)){
-      const wrapper=document.createElement('hui-card');wrapper.config=child;const card=document.createElement('demo-card');card.setConfig(child);wrapper.append(card);section.append(wrapper);
+      const wrapper=document.createElement('hui-card');wrapper.style.display='block';wrapper.config=child;const card=document.createElement('demo-card');card.setConfig(child);wrapper.append(card);section.append(wrapper);
     }
     this.shadowRoot.append(section);
   }
