@@ -1,0 +1,2 @@
+# Dependency regular expressions contain intentional whitespace in the bundle.
+dist/tabbed-card.js -whitespace
