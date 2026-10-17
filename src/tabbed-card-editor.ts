@@ -22,6 +22,7 @@ export class TabbedCardEditor extends HTMLElement {
   private _lovelace?: LovelaceConfig;
   private _native?: any;
   private _picker?: any;
+  private _code = false;
   constructor() {
     super();
     this.attachShadow({mode: 'open'});
@@ -37,6 +38,14 @@ export class TabbedCardEditor extends HTMLElement {
     // HA echoes emitted configurations; keep the child editor and focus intact.
     if (this._emitted === JSON.stringify(config) && this._native) return;
     this._render();
+  }
+
+  connectedCallback() {
+    if (this._config) this._render();
+  }
+
+  disconnectedCallback() {
+    this._sequence++;
   }
 
   set hass(hass: HomeAssistant) {
@@ -90,7 +99,7 @@ export class TabbedCardEditor extends HTMLElement {
 
   _navigate(path: ConfigPath, text: string) {
     this._trail.push({path: this._path, name: text});
-    this._path = path; this._render();
+    this._path = path; this._code = false; this._render();
   }
 
   _child(label: string, path: ConfigPath, parent: HTMLElement, listPath?: ConfigPath, index = 0) {
@@ -127,11 +136,20 @@ export class TabbedCardEditor extends HTMLElement {
     const body = this.shadowRoot.querySelector<HTMLElement>('.body')!;
     const node = readAt(this._config, this._path);
     if (this._trail.length) this._button('← Back', () => {
-      this._path = this._trail.pop()!.path; this._render();
+      this._path = this._trail.pop()!.path; this._code = false; this._render();
     }, body);
     const heading = document.createElement('h3');
     heading.textContent = this._trail.at(-1)?.name || (LABELS as Record<string, string>)[node.type] || caption(node);
     body.append(heading);
+    if (CONTAINERS.has(node.type)) {
+      this._button(this._code ? 'Back to container form' : 'Edit container YAML', () => {
+        this._code = !this._code; this._render();
+      }, body, true);
+      if (this._code) {
+        const host = document.createElement('div'); host.className = 'native'; body.append(host);
+        await this._mountNative(host, node, sequence, true); return;
+      }
+    }
     const fields = document.createElement('div'); fields.className = 'fields'; body.append(fields);
 
     if (node.type === 'custom:tabbed-card') {
@@ -171,6 +189,10 @@ export class TabbedCardEditor extends HTMLElement {
 
     if (CONTAINERS.has(node.type)) return;
     const host = document.createElement('div'); host.className = 'native'; body.append(host);
+    await this._mountNative(host, node, sequence);
+  }
+
+  async _mountNative(host: HTMLElement, node: CardConfig, sequence: number, yaml = false) {
     try {
       const helpers = await (window as any).loadCardHelpers();
       const stack = helpers.createCardElement({type: 'vertical-stack', cards: []});
@@ -179,14 +201,18 @@ export class TabbedCardEditor extends HTMLElement {
       const editor = document.createElement('hui-card-element-editor') as any;
       this._native = editor;
       editor.hass = this.hass; editor.lovelace = this._lovelace;
+      if (yaml) editor.GUImode = false;
       editor.value = structuredClone(node);
       editor.addEventListener('config-changed', (event: CustomEvent) => {
         event.stopPropagation();
-        if (sequence !== this._sequence || !(event as CustomEvent).detail?.config) return;
-        this._change(this._path, (event as CustomEvent).detail.config);
+        const detail = event.detail;
+        if (sequence !== this._sequence || !detail?.config || detail.error) return;
+        // HA emits on initialization and mode changes as well as real edits.
+        if (JSON.stringify(detail.config) === JSON.stringify(readAt(this._config, this._path))) return;
+        this._change(this._path, detail.config);
       });
       editor.addEventListener('GUImode-changed', (event: CustomEvent) => event.stopPropagation());
-      this._button('Toggle child form / YAML', () => editor.toggleMode(), host, true);
+      if (!yaml) this._button('Toggle child form / YAML', () => editor.toggleMode(), host, true);
       host.append(editor);
     } catch (error: any) {
       const message = document.createElement('p');
