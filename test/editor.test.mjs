@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Window} from 'happy-dom';
 import {fixture} from './fixture.mjs';
+import {popupFixture} from './bubble-fixture.mjs';
 const window = new Window();
 for (const name of ['window', 'document', 'HTMLElement', 'customElements', 'CustomEvent', 'Event']) {
   globalThis[name] = name === 'window' ? window : window[name];
@@ -12,8 +13,10 @@ class ChildEditor extends HTMLElement {
   toggleMode() { this.yaml = !this.yaml; }
 }
 class Picker extends HTMLElement {}
+class YamlEditor extends HTMLElement {}
 customElements.define('hui-card-element-editor', ChildEditor);
 customElements.define('hui-card-picker', Picker);
+customElements.define('ha-yaml-editor', YamlEditor);
 let delay;
 window.loadCardHelpers = async () => {
   if (delay) await delay;
@@ -38,6 +41,65 @@ test('opening, navigating, closing and reopening emits no changes', () => {
   editor.setConfig(fixture); click(editor, 'Edit · Rooms'); click(editor, '← Back');
   editor.remove(); document.body.append(editor); editor.setConfig(fixture);
   assert.deepEqual(editor._config, fixture); assert.equal(events.length, 0); editor.remove();
+});
+
+test('Bubble popup edits stay inside the tab tree without mounting the global-dialog editor', async () => {
+  const initial=popupFixture(),editor=create(),changes=[];
+  const path=['tabs',0,'card','cards',2];
+  editor.setConfig(initial);editor.addEventListener('config-changed',e=>changes.push(e.detail.config));
+  click(editor,'Edit · Rooms');click(editor,'Edit · 3. Example popup');await tick();
+  assert.equal(editor._native,undefined,'Never mount the Bubble editor that reopens the HA global dialog');
+  assert.equal(changes.length,0);
+  const name=editor.shadowRoot.querySelector('[aria-label="Popup name"]');
+  name.value='Renamed popup';name.dispatchEvent(new Event('change'));
+  editor.setConfig(changes.at(-1));
+  click(editor,'Edit · 1. grid');click(editor,'Edit · 1. Example sensor');await tick();
+  const native=editor._native;assert.equal(native.value.type,'entity');
+  native.dispatchEvent(new CustomEvent('config-changed',{bubbles:true,composed:true,detail:{config:{...native.value,name:'Changed sensor'}}}));
+  const saved=changes.at(-1);assert.equal(saved.type,'custom:tabbed-card');assert.equal(saved.tabs.length,2);
+  assert.deepEqual(saved.tabs[1],initial.tabs[1]);assert.deepEqual(saved.tabs[0].card.cards[0],initial.tabs[0].card.cards[0]);
+  const popup=saved.tabs[0].card.cards[2];assert.equal(popup.name,'Renamed popup');
+  assert.equal(popup.cards[0].cards[0].name,'Changed sensor');assert.deepEqual(popup.future_popup_option,{keep:true});
+  assert.equal(popup.hash,'#example-popup');assert.equal(popup.styles,initial.tabs[0].card.cards[2].styles);
+  editor.remove();const reopened=create();reopened.setConfig(saved);assert.deepEqual(reopened._config,saved);reopened.remove();
+});
+
+test('Bubble popup YAML and card collection operations retain both tabs and extensions', async () => {
+  const initial=popupFixture(),editor=create();editor.setConfig(initial);
+  editor._navigate(['tabs',0,'card','cards',2],'Popup');
+  for (const name of ['1. grid Copy','2. grid Up','2. grid Delete']) {
+    const button=editor.shadowRoot.querySelector(`[aria-label="${name}"]`);assert.ok(button,name);button.click();
+  }
+  assert.equal(editor._config.tabs[0].card.cards[2].cards.length,1);
+  click(editor,'Add child card');await tick();
+  editor._picker.dispatchEvent(new CustomEvent('config-changed',{detail:{config:{type:'markdown',content:'Added locally'}}}));
+  click(editor,'Edit container YAML');await tick();assert.equal(editor._native.tagName,'HA-YAML-EDITOR');
+  assert.equal(editor.shadowRoot.querySelector('hui-card-element-editor'),null);
+  const popup={...editor._native.defaultValue,show_header:false};
+  editor._native.dispatchEvent(new CustomEvent('value-changed',{bubbles:true,composed:true,detail:{value:popup,isValid:true}}));
+  click(editor,'Back to container form');assert.equal(editor._native,undefined);
+  assert.equal(editor._config.tabs.length,2);assert.deepEqual(editor._config.tabs[1],initial.tabs[1]);
+  assert.equal(editor._config.tabs[0].card.cards[2].show_header,false);
+  assert.equal(editor._config.tabs[0].card.cards[2].cards[1].content,'Added locally');
+  assert.deepEqual(editor._config.tabs[0].card.cards[2].future_popup_option,{keep:true});editor.remove();
+});
+
+test('popup YAML errors block saving without changing data; corrected YAML clears the error', async () => {
+  const editor=create(),initial=popupFixture(),changes=[];editor.setConfig(initial);
+  editor.addEventListener('config-changed',e=>changes.push(e.detail));
+  editor._navigate(['tabs',0,'card','cards',2],'Popup');click(editor,'Edit container YAML');await tick();
+  const yaml=editor._native;
+  yaml.dispatchEvent(new CustomEvent('value-changed',{detail:{value:null,isValid:false,errorMsg:'Invalid YAML'}}));
+  assert.deepEqual(editor._config,initial);assert.equal(changes.at(-1).error,'Invalid YAML');
+  editor.setConfig(changes.at(-1).config);assert.equal(editor._native,yaml);
+  yaml.dispatchEvent(new CustomEvent('value-changed',{detail:{value:yaml.defaultValue,isValid:true}}));
+  assert.equal(changes.at(-1).error,undefined);assert.deepEqual(changes.at(-1).config,initial);editor.remove();
+});
+
+test('Bubble buttons keep their native editor; only popup containers take the safe navigation path', async () => {
+  const config=structuredClone(fixture);config.tabs[1].card={type:'custom:bubble-card',card_type:'button',entity:'light.example'};
+  const editor=create();editor.setConfig(config);click(editor,'Edit · Other');await tick();
+  assert.equal(editor._native.value.card_type,'button');editor.remove();
 });
 
 test('native child events emit the full root; YAML toggles and echo preserve the native editor', async () => {

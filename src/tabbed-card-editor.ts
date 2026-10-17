@@ -61,12 +61,12 @@ export class TabbedCardEditor extends HTMLElement {
     if (this._native) this._native.lovelace = value;
   }
 
-  _emit() {
+  _emit(error?: string) {
     this._emitted = JSON.stringify(this._config);
     selectForPreview(this, this._config, this._path);
     this.dispatchEvent(new CustomEvent('config-changed', {
       bubbles: true, composed: true,
-      detail: {config: structuredClone(this._config)},
+      detail: {config: structuredClone(this._config), error},
     }));
   }
 
@@ -139,13 +139,15 @@ export class TabbedCardEditor extends HTMLElement {
     </style><div class="body"></div>`;
     const body = this.shadowRoot.querySelector<HTMLElement>('.body')!;
     const node = readAt(this._config, this._path);
+    const popup = node.type === 'custom:bubble-card' && node.card_type === 'pop-up' && Array.isArray(node.cards);
+    const container = CONTAINERS.has(node.type) || popup;
     if (this._trail.length) this._button('← Back', () => {
       this._path = this._trail.pop()!.path; this._code = false; this._render();
     }, body);
     const heading = document.createElement('h3');
     heading.textContent = this._trail.at(-1)?.name || (LABELS as Record<string, string>)[node.type] || caption(node);
     body.append(heading);
-    if (CONTAINERS.has(node.type)) {
+    if (container) {
       this._button(this._code ? 'Back to container form' : 'Edit container YAML', () => {
         this._code = !this._code; this._render();
       }, body, true);
@@ -155,6 +157,15 @@ export class TabbedCardEditor extends HTMLElement {
       }
     }
     const fields = document.createElement('div'); fields.className = 'fields'; body.append(fields);
+
+    if (popup) {
+      const note = document.createElement('p');
+      note.textContent = 'Edit popup settings here and select its child cards below. Use container YAML for advanced popup settings.';
+      body.append(note);
+      this._input('Popup name', [...this._path, 'name'], fields);
+      this._input('Popup hash', [...this._path, 'hash'], fields);
+      this._input('Popup icon', [...this._path, 'icon'], fields);
+    }
 
     if (node.type === 'custom:tabbed-card') {
       const note = document.createElement('p');
@@ -205,7 +216,7 @@ export class TabbedCardEditor extends HTMLElement {
       this._button('Add child card', () => this._showPicker(body, [...this._path, 'cards']), body, true);
     }
 
-    if (CONTAINERS.has(node.type)) return;
+    if (container) return;
     const host = document.createElement('div'); host.className = 'native'; body.append(host);
     await this._mountNative(host, node, sequence);
   }
@@ -216,6 +227,23 @@ export class TabbedCardEditor extends HTMLElement {
       const stack = helpers.createCardElement({type: 'vertical-stack', cards: []});
       await stack.constructor.getConfigElement();
       if (sequence !== this._sequence || !this.isConnected) return;
+      // Even GUImode=false can initialize a plugin form inside HA's wrapper.
+      // Use the YAML control directly so Bubble never acquires the global dialog.
+      if (yaml && node.type === 'custom:bubble-card' && node.card_type === 'pop-up') {
+        const editor = document.createElement('ha-yaml-editor') as any;
+        this._native = editor;
+        editor.defaultValue = structuredClone(node); editor.inDialog = true;
+        editor.addEventListener('value-changed', (event: CustomEvent) => {
+          event.stopPropagation();
+          if (sequence !== this._sequence) return;
+          const {value, isValid, errorMsg} = event.detail;
+          if (!isValid || !value || Array.isArray(value) || typeof value.type !== 'string') {
+            this._emit(errorMsg || 'Popup YAML must contain a card configuration.'); return;
+          }
+          this._change(this._path, value);
+        });
+        host.append(editor); return;
+      }
       const editor = document.createElement('hui-card-element-editor') as any;
       this._native = editor;
       editor.hass = this.hass; editor.lovelace = this._lovelace;
