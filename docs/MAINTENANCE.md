@@ -55,14 +55,14 @@ The fork and original register the same elements and must never be loaded togeth
 
 For manual installation after approval, copy the candidate bundle to
 `/config/www/tabbed-card/tabbed-card.js` and register
-`/local/tabbed-card/tabbed-card.js?v=0.4.0-beta.3` as a JavaScript module.
+`/local/tabbed-card/tabbed-card.js?v=0.4.0-beta.4` as a JavaScript module.
 Existing `type: custom:tabbed-card` YAML is retained. Once a release is explicitly
 approved and published, the fork can be added as a HACS custom dashboard repository.
 No beta release is promised to be available in HACS before publication.
 
 Published prereleases can be selected in HACS by enabling beta versions. After
 updating, hard-refresh each browser or clear the Home Assistant frontend cache.
-The beta.3 release is available for manual acceptance; publication does not
+The beta.4 release is available for manual acceptance; publication does not
 mean it has passed live Home Assistant testing or update an existing deployment.
 
 Rollback restores the previous resource URLs (including the editor bridge if

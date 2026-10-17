@@ -3,9 +3,9 @@
 A custom card for home assistant that utilizes tabs to segregate individual cards.
 
 This is the [SeanChengN maintained fork](https://github.com/SeanChengN/tabbed-card)
-of kinghat/tabbed-card. Prerelease `v0.4.0-beta.3` restores interactive editor
-previews while guarding nested Bubble popup editor launchers. Independent Home
-Assistant acceptance of this version is pending.
+of kinghat/tabbed-card. Prerelease `v0.4.0-beta.4` fixes tab icon/title alignment
+on desktop and mobile. Independent Home Assistant acceptance of this version
+is pending.
 See [maintenance, candidate installation and rollback](docs/MAINTENANCE.md).
 
 ![Tabbed Card](assets/tabbed-card.png)
