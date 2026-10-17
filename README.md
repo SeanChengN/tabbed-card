@@ -3,8 +3,8 @@
 A custom card for home assistant that utilizes tabs to segregate individual cards.
 
 This is the [SeanChengN maintained fork](https://github.com/SeanChengN/tabbed-card)
-of kinghat/tabbed-card. Candidate `v0.4.0-beta.1` is prepared for independent
-acceptance; it has not been released or deployed by this change.
+of kinghat/tabbed-card. Prerelease `v0.4.0-beta.2` fixes nested Bubble Card popup
+editing. Independent Home Assistant acceptance of this version is pending.
 See [maintenance, candidate installation and rollback](docs/MAINTENANCE.md).
 
 ![Tabbed Card](assets/tabbed-card.png)
@@ -13,8 +13,9 @@ See [maintenance, candidate installation and rollback](docs/MAINTENANCE.md).
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-After an approved release, add this fork as a custom Dashboard repository in
-[HACS](https://hacs.xyz). For the unreleased candidate and rollback steps, follow
+Add this fork as a custom Dashboard repository in
+[HACS](https://hacs.xyz) and enable beta versions to select a prerelease. For
+installation and rollback steps, follow
 the [candidate installation guide](docs/MAINTENANCE.md#candidate-installation-and-rollback).
 
 ## Card Schema
