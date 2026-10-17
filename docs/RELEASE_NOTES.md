@@ -1,35 +1,29 @@
-# v0.4.0-beta.3
+# v0.4.0-beta.4
 
-Fixes the beta.2 regression that disabled every control inside the right-hand
-editor preview. Room expanders, entity actions and preview buttons are interactive
-again; tab switching and selection highlighting remain available.
+Fixes tab icons sitting lower than their titles on both desktop and mobile.
+The slotted HA icon now uses a centered 24px flex box inside MWC's 24px icon
+slot, removing the inline SVG baseline offset. The style is scoped to tab
+header icons; icons inside child cards are unaffected.
 
-The previous whole-content `inert` restriction is replaced with capture guards
-for Bubble popup Edit/Create events and the popup Add button. These entry points
-can reuse Home Assistant's outer save callback and overwrite the root card.
-They now show a notification directing users to the Tabbed Card editor on the
-left. Ordinary popup controls remain interactive, and normal dashboard mode is
-unaffected. The Add guard depends on Bubble's current button class; future Bubble
-markup changes may require a compatibility update.
-
-The beta.2 local popup editor, child forms, direct YAML control and preservation
-of other tabs remain in place. No Bubble source is bundled.
+Original, equal and dynamic tab widths, stacked icons, active colors and
+indicators retain their existing behavior. No dashboard YAML changes are needed.
+The beta.3 interactive preview and Bubble nested-editor safeguards remain intact.
 
 ## Validation and manual acceptance
 
 The fix passed 20 automated regression tests, TypeScript/build checks and local
-package validation. The new tests exercise the built bundle with synthetic
-shadow-root controls, preview/mode changes, targeted editor interception and
-non-popup controls. Live Bubble/Home Assistant manual acceptance is pending;
-publishing does not update any HA deployment.
+package validation. A real headless Chromium geometry check covers 18 combinations
+of 360px/430px/1280px widths, original/equal/dynamic widths and horizontal/stacked
+headers. It uses the compiled card, actual MWC components and a synthetic HA
+icon matching HA's inline SVG host layout. The previous bundle reproduces an
+approximately 2.5px offset; the corrected bundle has zero vertical center offset
+in horizontal headers. Live HA/theme acceptance remains pending; publishing does
+not update any HA deployment.
 
-In HACS, enable beta versions, select `v0.4.0-beta.3`, then hard-refresh the browser
+In HACS, enable beta versions, select `v0.4.0-beta.4`, then hard-refresh the browser
 or clear its Home Assistant frontend cache. Back up the dashboard before testing.
-In the right-hand preview, expand a room, use a normal control and switch floor
-tabs. Use the left editor to edit a nested Bubble child field, save and reopen;
-confirm both floor tabs and unrelated configuration remain intact. Verify that
-Bubble's preview Edit/Add controls show the notification rather than reopening
-the global editor. Also test normal popup interaction after leaving edit mode.
+Check icon/title alignment on both desktop and phone, including selected and
+unselected tabs, then verify tab switching and the existing editor preview.
 
 The card type and resource filename remain `custom:tabbed-card` and
 `tabbed-card.js`. Existing fork installations need only update the bundle. Keep

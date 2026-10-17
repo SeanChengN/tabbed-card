@@ -1,4 +1,4 @@
-import { LitElement, html, PropertyValueMap, nothing } from "lit";
+import { LitElement, html, css, PropertyValueMap, nothing } from "lit";
 import { customElement, state, property, eventOptions } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
@@ -36,6 +36,19 @@ interface RenderedTab {
 
 @customElement("tabbed-card")
 export class TabbedCard extends LitElement {
+  static styles = css`
+    /* MWC centers a 24px icon slot. Avoid HA's inline SVG baseline shifting
+       the glyph down inside that slot, including when the icon is stacked. */
+    mwc-tab > ha-icon[slot="icon"] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      line-height: 0;
+    }
+  `;
+
   @property({ attribute: false }) public hass!: HomeAssistant;
   @property({type: Boolean}) public preview = false;
   @property({type: Boolean}) public editMode = false;
