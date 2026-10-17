@@ -1,5 +1,5 @@
 import { LitElement, html, PropertyValueMap, nothing } from "lit";
-import { customElement, state, property } from "lit/decorators.js";
+import { customElement, state, property, eventOptions } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import {
@@ -80,6 +80,27 @@ export class TabbedCard extends LitElement {
     const {element, outline, offset} = this._outlined;
     element.style.outline = outline; element.style.outlineOffset = offset;
     this._outlined = undefined;
+  }
+
+  @eventOptions({capture: true})
+  private _guardPopupEditor(event: Event) {
+    if (!this.preview && !this.editMode) return;
+    const path = event.composedPath();
+    const popup = path.some(node => {
+      const config = (node as HTMLElement & {config?: LovelaceCardConfig}).config;
+      return config?.type === 'custom:bubble-card' && config.card_type === 'pop-up' && Array.isArray(config.cards);
+    });
+    if (!popup) return;
+    // Bubble's Add button invokes its global editor directly. Edit uses a HA
+    // event; catch it before Bubble's inner sortable can reuse the root dialog.
+    if (event.type === 'click' && !path.some(node =>
+      node instanceof Element && node.classList.contains('bubble-cards-add-button'))) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    this.dispatchEvent(new CustomEvent('hass-notification', {
+      bubbles: true, composed: true,
+      detail: {message: 'Edit popup cards using the Tabbed Card editor on the left.'},
+    }));
   }
 
   protected updated() {
@@ -214,7 +235,11 @@ export class TabbedCard extends LitElement {
             `,
         )}
       </mwc-tab-bar>
-      <section ?inert=${this.preview || this.editMode}>
+      <section
+        @click=${this._guardPopupEditor}
+        @ll-edit-card=${this._guardPopupEditor}
+        @ll-create-card=${this._guardPopupEditor}
+      >
         <article>
           ${this._tabs.find((_, index) => index == this.selectedTabIndex)?.card}
         </article>

@@ -25,16 +25,19 @@ GUImode=false on HA's card-element wrapper still initializes a plugin's form,
 so that wrapper is intentionally bypassed for popup YAML. Invalid YAML remains
 local and does not replace the last valid root configuration. HA can still save
 earlier valid edits; correct the YAML before saving the complete card. Other Bubble card
-types retain their native editor. Preview card content is inert in edit/preview
-mode so popup menus cannot launch a second global editor; normal dashboard
-interaction is unchanged.
+types retain their native editor. Preview content remains interactive, including
+room expansion, entity actions and tab switching. Capture listeners intercept
+only Bubble popup Edit/Create events and its Add button while in edit/preview
+mode, before they can launch the unsafe second global editor. A notification
+directs the user to the Tabbed Card editor for popup structure changes. Normal
+dashboard interaction is unchanged. The Add button guard uses Bubble's
+`bubble-cards-add-button` class and must be rechecked if Bubble changes its markup.
 
 Regression tests cover no-change navigation, popup and child field changes,
 save/reopen, both tabs, unknown options, image masks, card copy/reorder/remove,
 picker insertion, YAML round trips/error recovery, ordinary Bubble button editors,
-and built-bundle preview interaction gating. All 18 automated cases passed,
-along with strict TypeScript, the production build and local package validation.
-These automated tests do not establish live HA GUI acceptance. Browser testing
-was unavailable because the Windows Computer Use helper could not confidently
-determine the active URL. The fix must be accepted on the real HA editor before
-claiming that the complete popup editing workflow passes.
+and built-bundle preview interaction with targeted popup editor guards. All 20
+automated cases passed, along with strict TypeScript, the production build and
+local package validation. These automated tests use synthetic cards, not a live
+Bubble or Home Assistant runtime. The fix must be accepted on the real HA editor
+before claiming that the complete popup editing workflow passes.
