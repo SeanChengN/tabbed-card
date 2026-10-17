@@ -84,16 +84,15 @@ test('Bubble popup YAML and card collection operations retain both tabs and exte
   assert.deepEqual(editor._config.tabs[0].card.cards[2].future_popup_option,{keep:true});editor.remove();
 });
 
-test('popup YAML errors block saving without changing data; corrected YAML clears the error', async () => {
+test('invalid popup YAML stays local without replacing the last valid root configuration', async () => {
   const editor=create(),initial=popupFixture(),changes=[];editor.setConfig(initial);
   editor.addEventListener('config-changed',e=>changes.push(e.detail));
   editor._navigate(['tabs',0,'card','cards',2],'Popup');click(editor,'Edit container YAML');await tick();
   const yaml=editor._native;
   yaml.dispatchEvent(new CustomEvent('value-changed',{detail:{value:null,isValid:false,errorMsg:'Invalid YAML'}}));
-  assert.deepEqual(editor._config,initial);assert.equal(changes.at(-1).error,'Invalid YAML');
-  editor.setConfig(changes.at(-1).config);assert.equal(editor._native,yaml);
+  assert.deepEqual(editor._config,initial);assert.equal(changes.length,0);assert.equal(yaml.isValid,false);
   yaml.dispatchEvent(new CustomEvent('value-changed',{detail:{value:yaml.defaultValue,isValid:true}}));
-  assert.equal(changes.at(-1).error,undefined);assert.deepEqual(changes.at(-1).config,initial);editor.remove();
+  assert.equal(yaml.isValid,true);assert.deepEqual(changes.at(-1).config,initial);editor.remove();
 });
 
 test('Bubble buttons keep their native editor; only popup containers take the safe navigation path', async () => {

@@ -61,12 +61,12 @@ export class TabbedCardEditor extends HTMLElement {
     if (this._native) this._native.lovelace = value;
   }
 
-  _emit(error?: string) {
+  _emit() {
     this._emitted = JSON.stringify(this._config);
     selectForPreview(this, this._config, this._path);
     this.dispatchEvent(new CustomEvent('config-changed', {
       bubbles: true, composed: true,
-      detail: {config: structuredClone(this._config), error},
+      detail: {config: structuredClone(this._config)},
     }));
   }
 
@@ -236,10 +236,11 @@ export class TabbedCardEditor extends HTMLElement {
         editor.addEventListener('value-changed', (event: CustomEvent) => {
           event.stopPropagation();
           if (sequence !== this._sequence) return;
-          const {value, isValid, errorMsg} = event.detail;
+          const {value, isValid} = event.detail;
           if (!isValid || !value || Array.isArray(value) || typeof value.type !== 'string') {
-            this._emit(errorMsg || 'Popup YAML must contain a card configuration.'); return;
+            editor.isValid = false; return;
           }
+          editor.isValid = true;
           this._change(this._path, value);
         });
         host.append(editor); return;

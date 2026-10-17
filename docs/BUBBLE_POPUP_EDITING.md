@@ -22,8 +22,9 @@ The fork treats embedded Bubble popups as containers. It does not mount Bubble's
 standalone popup form; popup child collections use local navigation and child
 forms, while advanced popup options use HA's YAML control directly. Setting
 GUImode=false on HA's card-element wrapper still initializes a plugin's form,
-so that wrapper is intentionally bypassed for popup YAML. Invalid YAML blocks
-saving without modifying the last valid root configuration. Other Bubble card
+so that wrapper is intentionally bypassed for popup YAML. Invalid YAML remains
+local and does not replace the last valid root configuration. HA can still save
+earlier valid edits; correct the YAML before saving the complete card. Other Bubble card
 types retain their native editor. Preview card content is inert in edit/preview
 mode so popup menus cannot launch a second global editor; normal dashboard
 interaction is unchanged.
