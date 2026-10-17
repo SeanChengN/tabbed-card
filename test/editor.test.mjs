@@ -92,3 +92,12 @@ test('HA initialization, invalid YAML and container YAML round trips preserve th
   assert.deepEqual(changes,[changed]);click(editor,'Back to container form');
   assert.deepEqual(editor._config,changed);editor.remove();
 });
+
+test('width reset retains newly changed defaults and unknown options', () => {
+  const editor=create();const input=editor.shadowRoot.querySelector('input[type=number]');input.value='0';input.dispatchEvent(new Event('change'));
+  const select=editor.shadowRoot.querySelector('select');select.value='equal';select.dispatchEvent(new Event('change'));
+  select.value='';select.dispatchEvent(new Event('change'));
+  assert.equal(editor._config.options.defaultTabIndex,0);
+  assert.deepEqual(editor._config.options.futureOption,fixture.options.futureOption);
+  assert.equal(editor._config.options.tabWidthMode,undefined);editor.remove();
+});

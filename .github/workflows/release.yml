@@ -1,0 +1,52 @@
+name: Prepare draft release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version tag matching package.json, for example v0.4.0-beta.1
+        required: true
+        type: string
+      candidate_accepted:
+        description: Independent candidate acceptance has been completed
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+concurrency:
+  group: manual-release
+  cancel-in-progress: false
+jobs:
+  draft:
+    if: inputs.candidate_accepted && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Verify requested version
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: node -e 'if (process.env.RELEASE_TAG !== "v" + require("./package.json").version) process.exit(1)'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+      - run: git diff --exit-code -- dist/tabbed-card.js
+      - run: pnpm check:hacs
+      - run: pnpm package
+      - name: Prepare reviewed release draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          flags=()
+          if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" artifacts/"$RELEASE_TAG"/* \
+            --target "$GITHUB_SHA" --title "$RELEASE_TAG" --draft \
+            --notes-file docs/RELEASE_NOTES.md "${flags[@]}"

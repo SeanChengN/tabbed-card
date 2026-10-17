@@ -2,13 +2,20 @@
 
 A custom card for home assistant that utilizes tabs to segregate individual cards.
 
+This is the [SeanChengN maintained fork](https://github.com/SeanChengN/tabbed-card)
+of kinghat/tabbed-card. Candidate `v0.4.0-beta.1` is prepared for independent
+acceptance; it has not been released or deployed by this change.
+See [maintenance, candidate installation and rollback](docs/MAINTENANCE.md).
+
 ![Tabbed Card](assets/tabbed-card.png)
 
 ## Installation
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-Use [HACS](https://hacs.xyz) or follow this [guide](https://github.com/thomasloven/hass-config/wiki/Lovelace-Plugins)
+After an approved release, add this fork as a custom Dashboard repository in
+[HACS](https://hacs.xyz). For the unreleased candidate and rollback steps, follow
+the [candidate installation guide](docs/MAINTENANCE.md#candidate-installation-and-rollback).
 
 ## Card Schema
 
@@ -16,6 +23,7 @@ Use [HACS](https://hacs.xyz) or follow this [guide](https://github.com/thomaslov
 type: custom:tabbed-card
 options?:
   defaultTabIndex?: number
+  tabWidthMode?: equal | dynamic
 styles?:
 attributes?:
   label?: string
@@ -89,6 +97,7 @@ You can apply global and per tab configuration to your card. Global configuratio
 | Property          | Default | Description                    |
 | ----------------- | ------- | ------------------------------ |
 | `defaultTabIndex` | `0`     | tab to display on first render |
+| `tabWidthMode` | unset | `equal` shares the available width; `dynamic` fits labels and scrolls. Unset keeps upstream sizing. |
 
 ```yaml
 type: custom:tabbed-card
@@ -221,3 +230,7 @@ known container navigation does not replace their advanced YAML settings.
 Run `pnpm install --frozen-lockfile`, `pnpm test` and `pnpm build` to validate the
 editor. Tests use synthetic entities and image paths; never add HA storage exports,
 credentials or personal dashboard data to this repository.
+
+The maintained fork highlights the selected card only in an editor preview.
+Selection is temporary and is never saved into YAML. Opaque custom containers
+are highlighted as a whole when they do not expose individual `hui-card` children.

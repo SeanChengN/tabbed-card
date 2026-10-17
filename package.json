@@ -1,6 +1,6 @@
 {
   "name": "tabbed-card",
-  "version": "0.1.0",
+  "version": "0.4.0-beta.1",
   "description": "a custom card for home assistant that utilizes tabs to segregate individual cards.",
   "keywords": [
     "home-assistant",
@@ -15,7 +15,10 @@
     "build:no-check": "vite build --emptyOutDir false",
     "watch": "vite build --mode development",
     "test": "node scripts/compile-tests.mjs && node --test test/*.test.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:hacs": "node scripts/check-package.mjs",
+    "package": "node scripts/package-candidate.mjs",
+    "dev": "vite --host 127.0.0.1"
   },
   "dependencies": {
     "@material/mwc-tab": "^0.27.0",

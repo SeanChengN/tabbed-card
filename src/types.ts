@@ -19,7 +19,7 @@ export interface TabConfig {
 }
 
 export interface TabbedCardConfig extends CardConfig {
-  options?: { defaultTabIndex?: number; [key: string]: unknown };
+  options?: { defaultTabIndex?: number; tabWidthMode?: "equal" | "dynamic"; [key: string]: unknown };
   styles?: Record<string, string>;
   attributes?: TabConfig["attributes"];
   tabs: TabConfig[];

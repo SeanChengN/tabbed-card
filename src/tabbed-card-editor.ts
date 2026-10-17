@@ -1,6 +1,7 @@
 import type { HomeAssistant, LovelaceConfig } from "custom-card-helpers";
 import type { CardConfig, ConfigPath, TabConfig, TabbedCardConfig } from "./types";
 import { caption, editList, readAt, replaceAt } from "./editor-model";
+import { clearPreview, selectForPreview } from "./editor-preview";
 
 const CONTAINERS = new Set([
   'custom:tabbed-card', 'custom:expander-card', 'custom:vertical-stack-in-card',
@@ -46,6 +47,7 @@ export class TabbedCardEditor extends HTMLElement {
 
   disconnectedCallback() {
     this._sequence++;
+    clearPreview(this);
   }
 
   set hass(hass: HomeAssistant) {
@@ -61,6 +63,7 @@ export class TabbedCardEditor extends HTMLElement {
 
   _emit() {
     this._emitted = JSON.stringify(this._config);
+    selectForPreview(this, this._config, this._path);
     this.dispatchEvent(new CustomEvent('config-changed', {
       bubbles: true, composed: true,
       detail: {config: structuredClone(this._config)},
@@ -122,6 +125,7 @@ export class TabbedCardEditor extends HTMLElement {
   async _render() {
     if (!this.shadowRoot || !this._config) return;
     const sequence = ++this._sequence;
+    if (this.isConnected) selectForPreview(this, this._config, this._path);
     this._native = undefined; this._picker = undefined;
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;color:var(--primary-text-color);font:14px var(--paper-font-body1_-_font-family,system-ui)}
@@ -157,6 +161,20 @@ export class TabbedCardEditor extends HTMLElement {
       note.textContent = 'Select a tab, then navigate into its child cards. Save changes with the dashboard editor.'; body.append(note);
       const defaultInput = this._input('Default tab index (starting at 0)', [...this._path, 'options', 'defaultTabIndex'], fields, 'number', 0);
       defaultInput.max = String(Math.max(0, node.tabs.length - 1));
+      const widthLabel = document.createElement('label'); widthLabel.textContent = 'Tab width';
+      const widthSelect = document.createElement('select'); widthSelect.setAttribute('aria-label', 'Tab width');
+      for (const [value, label] of [['', 'Original behaviour'], ['equal', 'Equal width'], ['dynamic', 'Fit content']]) {
+        const option = document.createElement('option'); option.value = value; option.textContent = label; widthSelect.append(option);
+      }
+      widthSelect.value = node.options?.tabWidthMode || '';
+      widthSelect.addEventListener('change', () => {
+        if (widthSelect.value) this._change([...this._path, 'options', 'tabWidthMode'], widthSelect.value);
+        else {
+          const options = {...readAt(this._config, [...this._path, 'options'])}; delete options.tabWidthMode;
+          this._change([...this._path, 'options'], options);
+        }
+      });
+      widthLabel.append(widthSelect); fields.append(widthLabel);
       // Missing options is created only when the field is changed.
       this._button('Add tab', () => {
         this._change([...this._path, 'tabs'], [...node.tabs, {

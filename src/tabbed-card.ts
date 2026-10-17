@@ -24,6 +24,9 @@ interface mwcTabBarEvent extends Event {
 
 import type { TabConfig, TabbedCardConfig } from "./types";
 import { defaultIndex } from "./editor-model";
+import { readAt } from "./editor-model";
+import { tabLayout } from "./tab-layout";
+import { SELECTION_EVENT, getSelection, previewMatches, findPreviewTarget } from "./editor-preview";
 
 interface RenderedTab {
   card: LovelaceCard;
@@ -34,6 +37,15 @@ interface RenderedTab {
 @customElement("tabbed-card")
 export class TabbedCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
+  @property({type: Boolean}) public preview = false;
+  @property({type: Boolean}) public editMode = false;
+  private _outlined?: {element: HTMLElement; outline: string; offset: string};
+  private _selectionListener = () => {
+    if (!previewMatches(this._config, this.preview, this.editMode)) { this._clearOutline(); return; }
+    const path = getSelection()!.path;
+    if (path[0] === 'tabs' && typeof path[1] === 'number') this.selectedTabIndex = path[1];
+    this.requestUpdate();
+  };
   @property() protected selectedTabIndex = 0;
   @property() private _helpers: any;
 
@@ -49,6 +61,35 @@ export class TabbedCard extends LitElement {
 
   private async loadCardHelpers() {
     this._helpers = await (window as any).loadCardHelpers();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener(SELECTION_EVENT, this._selectionListener);
+    this._selectionListener();
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener(SELECTION_EVENT, this._selectionListener);
+    this._clearOutline();
+    super.disconnectedCallback();
+  }
+
+  private _clearOutline() {
+    if (!this._outlined) return;
+    const {element, outline, offset} = this._outlined;
+    element.style.outline = outline; element.style.outlineOffset = offset;
+    this._outlined = undefined;
+  }
+
+  protected updated() {
+    this._clearOutline();
+    if (!previewMatches(this._config, this.preview, this.editMode)) return;
+    const root = this._tabs?.[this.selectedTabIndex]?.card;
+    if (!root) return;
+    const target = findPreviewTarget(root, readAt(this._config, getSelection()!.path));
+    this._outlined = {element: target, outline: target.style.outline, offset: target.style.outlineOffset};
+    target.style.outline = '2px solid var(--primary-color, #03a9f4)'; target.style.outlineOffset = '-2px';
   }
 
   static async getConfigElement(): Promise<LovelaceCardEditor> {
@@ -79,6 +120,7 @@ export class TabbedCard extends LitElement {
     };
 
     this.loadCardHelpers();
+    this._selectionListener();
   }
 
   protected willUpdate(
@@ -154,11 +196,11 @@ export class TabbedCard extends LitElement {
           (tab) =>
             html`
               <mwc-tab
-                style=${ifDefined(styleMap(tab?.styles || {}))}
+                style=${styleMap({...tab?.styles, ...tabLayout(this._config.options?.tabWidthMode)})}
                 label="${tab?.attributes?.label || nothing}"
                 ?hasImageIcon=${tab?.attributes?.icon}
                 ?isFadingIndicator=${tab?.attributes?.isFadingIndicator}
-                ?minWidth=${tab?.attributes?.minWidth}
+                ?minWidth=${this._config.options?.tabWidthMode === 'dynamic' || (this._config.options?.tabWidthMode !== 'equal' && tab?.attributes?.minWidth)}
                 ?isMinWidthIndicator=${tab?.attributes?.isMinWidthIndicator}
                 ?stacked=${tab?.attributes?.stacked}
               >
