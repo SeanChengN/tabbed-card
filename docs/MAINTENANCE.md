@@ -37,6 +37,13 @@ that file whenever runtime source changes. CI verifies that a fresh build
 matches it. Other build output remains ignored; tracking this candidate is not
 a GitHub Release or approval to switch HA resources.
 
+After independent acceptance, manually run Prepare draft release on `main`,
+enter the exact package version tag and confirm the acceptance checkbox. It
+reruns tests/build/package checks and prepares a draft with bundle, SHA256,
+provenance, license and install instructions. Review that draft before publishing
+it in GitHub. The workflow is never triggered by a push, tag or schedule and
+has not been run as part of this candidate preparation.
+
 ## Candidate installation and rollback
 
 Keep the currently accepted dashboard running while evaluating the candidate
