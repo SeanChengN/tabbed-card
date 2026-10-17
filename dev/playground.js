@@ -35,6 +35,16 @@ class StubEditor extends HTMLElement {
   emit(){this.dispatchEvent(new CustomEvent('config-changed',{bubbles:true,composed:true,detail:{config:structuredClone(this.config)}}));}
 }
 customElements.define('hui-card-element-editor',StubEditor);
+class StubYamlEditor extends HTMLElement {
+  connectedCallback(){
+    const label=document.createElement('label');label.textContent='Popup code (JSON subset of YAML)';
+    const input=document.createElement('textarea');input.style.cssText='width:100%;box-sizing:border-box;min-height:280px';input.value=JSON.stringify(this.defaultValue,null,2);
+    input.onchange=()=>{let value,isValid=true;try{value=JSON.parse(input.value);}catch{isValid=false;}
+      this.dispatchEvent(new CustomEvent('value-changed',{bubbles:true,composed:true,detail:{value,isValid,errorMsg:isValid?undefined:'Invalid JSON'}}));};
+    label.append(input);this.replaceChildren(label);
+  }
+}
+customElements.define('ha-yaml-editor',StubYamlEditor);
 class StubPicker extends HTMLElement {
   connectedCallback(){const button=document.createElement('button');button.textContent='Add synthetic entity card';button.onclick=()=>this.dispatchEvent(new CustomEvent('config-changed',{bubbles:true,composed:true,detail:{config:{type:'entity',entity:'sensor.example',name:'Example'}}}));this.replaceChildren(button);}
 }

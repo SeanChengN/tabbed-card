@@ -234,3 +234,10 @@ credentials or personal dashboard data to this repository.
 The maintained fork highlights the selected card only in an editor preview.
 Selection is temporary and is never saved into YAML. Opaque custom containers
 are highlighted as a whole when they do not expose individual `hui-card` children.
+
+Bubble `pop-up` cards with embedded `cards` use this editor's container navigation.
+Edit the popup name/hash/icon here, child cards in their own forms, and advanced
+popup settings through container YAML. Bubble's standalone child dialog can
+reopen a nested stack with the outer save callback, discarding other tabs.
+Card content in an editor preview is inert; use the editor navigation controls
+to select and edit children. Normal dashboard popups remain interactive.

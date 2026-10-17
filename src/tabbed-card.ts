@@ -214,7 +214,7 @@ export class TabbedCard extends LitElement {
             `,
         )}
       </mwc-tab-bar>
-      <section>
+      <section ?inert=${this.preview || this.editMode}>
         <article>
           ${this._tabs.find((_, index) => index == this.selectedTabIndex)?.card}
         </article>
